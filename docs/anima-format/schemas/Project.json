@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://anima.dev/schemas/Project.json",
+  "title": "Project",
+  "type": "object",
+  "required": ["id", "name", "version", "sequences"],
+  "additionalProperties": false,
+  "properties": {
+    "id": { "type": "string" },
+    "name": { "type": "string" },
+    "version": { "type": "string" },
+    "workingColorSpace": {
+      "type": "string",
+      "enum": ["linear-rec709", "acescg"],
+      "default": "linear-rec709"
+    },
+    "displayColorSpace": {
+      "type": "string",
+      "default": "srgb"
+    },
+    "sequences": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "timebaseFps", "sceneIds"],
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "timebaseFps": { "type": "number" },
+          "sceneIds": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "shotOrder": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "sceneId": { "type": "string" },
+                "inFrame": { "type": "integer" },
+                "outFrame": { "type": "integer" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "defaultSceneId": { "type": "string" },
+    "assetRefs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "path": { "type": "string" },
+          "sha256": { "type": "string" },
+          "kind": { "type": "string" }
+        }
+      }
+    },
+    "metadata": { "type": "object", "additionalProperties": true }
+  }
+}

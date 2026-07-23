@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://anima.dev/schemas/Layer.json",
+  "title": "Layer",
+  "type": "object",
+  "required": ["id", "name", "type", "visible", "opacity", "blendMode"],
+  "additionalProperties": false,
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+    "name": { "type": "string" },
+    "type": {
+      "type": "string",
+      "enum": [
+        "rasterStroke",
+        "vectorStroke",
+        "fill",
+        "cel",
+        "mesh",
+        "group",
+        "audio",
+        "adjustment",
+        "null",
+        "threeD"
+      ]
+    },
+    "visible": { "type": "boolean" },
+    "locked": { "type": "boolean", "default": false },
+    "opacity": { "type": "number", "minimum": 0, "maximum": 1 },
+    "blendMode": {
+      "type": "string",
+      "enum": [
+        "srcOver",
+        "multiply",
+        "screen",
+        "overlay",
+        "add",
+        "subtract",
+        "darken",
+        "lighten"
+      ]
+    },
+    "parentId": { "type": ["string", "null"] },
+    "transform": {
+      "type": "object",
+      "properties": {
+        "x": { "type": "number" },
+        "y": { "type": "number" },
+        "rotation": { "type": "number", "description": "radians" },
+        "scaleX": { "type": "number" },
+        "scaleY": { "type": "number" },
+        "pivotX": { "type": "number" },
+        "pivotY": { "type": "number" }
+      }
+    },
+    "channelIds": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "celLibrary": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["celId", "name"],
+        "properties": {
+          "celId": { "type": "string" },
+          "name": { "type": "string" },
+          "assetRef": { "type": "string" }
+        }
+      }
+    },
+    "boneRootId": { "type": ["string", "null"] },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+}

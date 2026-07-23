@@ -1,0 +1,302 @@
+{
+  "project": {
+    "id": "proj_bouncing_ball_demo",
+    "name": "Bouncing Ball Demo",
+    "version": "1.0.0",
+    "workingColorSpace": "linear-rec709",
+    "displayColorSpace": "srgb",
+    "defaultSceneId": "scene_main",
+    "sequences": [
+      {
+        "id": "seq_main",
+        "name": "Main",
+        "timebaseFps": 24,
+        "sceneIds": ["scene_main"],
+        "shotOrder": [
+          { "sceneId": "scene_main", "inFrame": 0, "outFrame": 48 }
+        ]
+      }
+    ],
+    "assetRefs": [],
+    "metadata": { "demo": true }
+  },
+  "scene": {
+    "id": "scene_main",
+    "name": "Bounce + Wave + Glow",
+    "fps": 24,
+    "width": 1280,
+    "height": 720,
+    "durationFrames": 48,
+    "backgroundColor": [0.12, 0.13, 0.16, 1.0],
+    "camera": { "x": 0, "y": 0, "zoom": 1, "rotation": 0 },
+    "markers": [
+      { "frame": 0, "name": "start", "color": "#6C9EFF" },
+      { "frame": 24, "name": "apex", "color": "#FFB86C" }
+    ],
+    "layers": [
+      {
+        "id": "layer_ball",
+        "name": "Bouncing Ball",
+        "type": "rasterStroke",
+        "visible": true,
+        "locked": false,
+        "opacity": 1.0,
+        "blendMode": "srcOver",
+        "parentId": null,
+        "transform": { "x": 0, "y": 0, "rotation": 0, "scaleX": 1, "scaleY": 1, "pivotX": 0, "pivotY": 0 },
+        "channelIds": ["ch_ball_frames", "ch_ball_y"],
+        "metadata": { "onionEligible": true, "role": "prop" }
+      },
+      {
+        "id": "layer_character",
+        "name": "Rigged Character",
+        "type": "mesh",
+        "visible": true,
+        "locked": false,
+        "opacity": 1.0,
+        "blendMode": "srcOver",
+        "parentId": null,
+        "transform": { "x": 900, "y": 420, "rotation": 0, "scaleX": 1, "scaleY": 1, "pivotX": 0, "pivotY": 0 },
+        "channelIds": ["ch_arm_rot"],
+        "boneRootId": "bone_root",
+        "metadata": { "role": "character" }
+      },
+      {
+        "id": "layer_beauty",
+        "name": "Beauty Pass (comp source)",
+        "type": "group",
+        "visible": true,
+        "locked": false,
+        "opacity": 1.0,
+        "blendMode": "srcOver",
+        "parentId": null,
+        "channelIds": [],
+        "metadata": { "compSource": true }
+      }
+    ],
+    "channels": [
+      {
+        "id": "ch_ball_frames",
+        "layerId": "layer_ball",
+        "path": "frames",
+        "keyframes": [
+          {
+            "id": "kf_ball_f0",
+            "frame": 0,
+            "interp": "hold",
+            "value": {
+              "strokes": [
+                {
+                  "brush": "ink_nib",
+                  "color": [0.95, 0.35, 0.25, 1.0],
+                  "points": [
+                    { "x": 200, "y": 520, "p": 0.8 },
+                    { "x": 240, "y": 480, "p": 0.9 },
+                    { "x": 280, "y": 520, "p": 0.8 },
+                    { "x": 240, "y": 560, "p": 0.7 },
+                    { "x": 200, "y": 520, "p": 0.8 }
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "id": "kf_ball_f12",
+            "frame": 12,
+            "interp": "hold",
+            "value": {
+              "strokes": [
+                {
+                  "brush": "ink_nib",
+                  "color": [0.95, 0.35, 0.25, 1.0],
+                  "points": [
+                    { "x": 360, "y": 280, "p": 0.85 },
+                    { "x": 400, "y": 240, "p": 0.95 },
+                    { "x": 440, "y": 280, "p": 0.85 },
+                    { "x": 400, "y": 320, "p": 0.75 },
+                    { "x": 360, "y": 280, "p": 0.85 }
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "id": "kf_ball_f24",
+            "frame": 24,
+            "interp": "hold",
+            "value": {
+              "strokes": [
+                {
+                  "brush": "ink_nib",
+                  "color": [0.95, 0.35, 0.25, 1.0],
+                  "points": [
+                    { "x": 520, "y": 520, "p": 0.9 },
+                    { "x": 580, "y": 500, "p": 0.7 },
+                    { "x": 620, "y": 520, "p": 0.9 },
+                    { "x": 580, "y": 540, "p": 0.7 },
+                    { "x": 520, "y": 520, "p": 0.9 }
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "id": "kf_ball_f36",
+            "frame": 36,
+            "interp": "hold",
+            "value": {
+              "strokes": [
+                {
+                  "brush": "ink_nib",
+                  "color": [0.95, 0.35, 0.25, 1.0],
+                  "points": [
+                    { "x": 700, "y": 300, "p": 0.85 },
+                    { "x": 740, "y": 260, "p": 0.95 },
+                    { "x": 780, "y": 300, "p": 0.85 },
+                    { "x": 740, "y": 340, "p": 0.75 },
+                    { "x": 700, "y": 300, "p": 0.85 }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "id": "ch_ball_y",
+        "layerId": "layer_ball",
+        "path": "transform.y",
+        "keyframes": [
+          {
+            "id": "kf_y0",
+            "frame": 0,
+            "value": 0,
+            "interp": "bezier",
+            "handles": { "in": { "dt": -2, "dv": 0 }, "out": { "dt": 4, "dv": -40 } }
+          },
+          {
+            "id": "kf_y12",
+            "frame": 12,
+            "value": -180,
+            "interp": "bezier",
+            "handles": { "in": { "dt": -4, "dv": 0 }, "out": { "dt": 4, "dv": 40 } }
+          },
+          {
+            "id": "kf_y24",
+            "frame": 24,
+            "value": 0,
+            "interp": "bezier",
+            "handles": { "in": { "dt": -4, "dv": 40 }, "out": { "dt": 4, "dv": -40 } }
+          },
+          {
+            "id": "kf_y36",
+            "frame": 36,
+            "value": -160,
+            "interp": "bezier",
+            "handles": { "in": { "dt": -4, "dv": 0 }, "out": { "dt": 4, "dv": 30 } }
+          },
+          {
+            "id": "kf_y48",
+            "frame": 48,
+            "value": 0,
+            "interp": "linear"
+          }
+        ]
+      },
+      {
+        "id": "ch_arm_rot",
+        "layerId": "layer_character",
+        "path": "bones.bone_upperarm_R.rotation",
+        "keyframes": [
+          { "id": "kf_arm0", "frame": 0, "value": -0.4, "interp": "bezier", "handles": { "in": { "dt": -2, "dv": 0 }, "out": { "dt": 3, "dv": 0.1 } } },
+          { "id": "kf_arm12", "frame": 12, "value": 0.6, "interp": "bezier", "handles": { "in": { "dt": -3, "dv": 0 }, "out": { "dt": 3, "dv": 0 } } },
+          { "id": "kf_arm24", "frame": 24, "value": -0.4, "interp": "bezier", "handles": { "in": { "dt": -3, "dv": 0 }, "out": { "dt": 3, "dv": 0 } } },
+          { "id": "kf_arm36", "frame": 36, "value": 0.5, "interp": "bezier", "handles": { "in": { "dt": -3, "dv": 0 }, "out": { "dt": 3, "dv": 0 } } },
+          { "id": "kf_arm48", "frame": 48, "value": -0.4, "interp": "linear" }
+        ]
+      }
+    ],
+    "bones": [
+      {
+        "id": "bone_root",
+        "name": "Root",
+        "parentId": null,
+        "length": 40,
+        "rest": { "x": 0, "y": 0, "rotation": -1.5708, "scaleX": 1, "scaleY": 1 }
+      },
+      {
+        "id": "bone_spine",
+        "name": "Spine",
+        "parentId": "bone_root",
+        "length": 80,
+        "rest": { "x": 0, "y": 0, "rotation": 0, "scaleX": 1, "scaleY": 1 }
+      },
+      {
+        "id": "bone_upperarm_R",
+        "name": "UpperArm_R",
+        "parentId": "bone_spine",
+        "length": 55,
+        "rest": { "x": 0, "y": 0, "rotation": -0.4, "scaleX": 1, "scaleY": 1 },
+        "ik": { "enabled": false, "targetId": null, "poleId": null, "solver": "twoBone" },
+        "limits": { "rotationMin": -1.2, "rotationMax": 1.0 }
+      },
+      {
+        "id": "bone_forearm_R",
+        "name": "Forearm_R",
+        "parentId": "bone_upperarm_R",
+        "length": 50,
+        "rest": { "x": 0, "y": 0, "rotation": -0.3, "scaleX": 1, "scaleY": 1 },
+        "ik": { "enabled": true, "targetId": "ctrl_hand_R", "poleId": null, "solver": "twoBone" }
+      }
+    ],
+    "compositeGraph": {
+      "outputNodeId": "node_out",
+      "nodes": [
+        {
+          "id": "node_src",
+          "name": "Scene Beauty",
+          "type": "source.scene",
+          "position": { "x": 80, "y": 120 },
+          "inputs": {},
+          "params": { "sceneId": "scene_main", "layerIds": ["layer_ball", "layer_character"] },
+          "outputs": { "output": "rgba" },
+          "enabled": true
+        },
+        {
+          "id": "node_glow",
+          "name": "Glow",
+          "type": "blur.gaussian",
+          "position": { "x": 320, "y": 120 },
+          "inputs": { "image": "node_src.output" },
+          "params": { "radius": 16, "sigma": 5.5, "threshold": 0.2 },
+          "outputs": { "output": "rgba" },
+          "enabled": true,
+          "metadata": { "role": "glow" }
+        },
+        {
+          "id": "node_merge",
+          "name": "Merge Add",
+          "type": "comp.merge",
+          "position": { "x": 560, "y": 120 },
+          "inputs": { "a": "node_src.output", "b": "node_glow.output" },
+          "params": { "mode": "add", "opacity": 0.65 },
+          "outputs": { "output": "rgba" },
+          "enabled": true
+        },
+        {
+          "id": "node_out",
+          "name": "Output",
+          "type": "output.viewer",
+          "position": { "x": 800, "y": 120 },
+          "inputs": { "image": "node_merge.output" },
+          "params": {},
+          "outputs": {},
+          "enabled": true
+        }
+      ]
+    },
+    "metadata": {
+      "description": "Complete small scene: bouncing ball drawings, one FK/IK character arm, one glow composite chain."
+    }
+  }
+}

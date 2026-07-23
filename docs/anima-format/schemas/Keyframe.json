@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://anima.dev/schemas/Keyframe.json",
+  "title": "Keyframe",
+  "type": "object",
+  "required": ["id", "frame", "value", "interp"],
+  "additionalProperties": false,
+  "properties": {
+    "id": { "type": "string" },
+    "frame": { "type": "integer" },
+    "value": {
+      "description": "Scalar, vector, or structured value depending on channel type",
+      "oneOf": [
+        { "type": "number" },
+        { "type": "boolean" },
+        { "type": "string" },
+        {
+          "type": "array",
+          "items": { "type": "number" }
+        },
+        { "type": "object", "additionalProperties": true }
+      ]
+    },
+    "interp": {
+      "type": "string",
+      "enum": ["hold", "linear", "bezier", "bounce", "elastic"]
+    },
+    "handles": {
+      "type": "object",
+      "properties": {
+        "in": {
+          "type": "object",
+          "properties": {
+            "dt": { "type": "number" },
+            "dv": { "type": "number" }
+          }
+        },
+        "out": {
+          "type": "object",
+          "properties": {
+            "dt": { "type": "number" },
+            "dv": { "type": "number" }
+          }
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "properties": {
+        "createdBy": { "type": "string" },
+        "takeId": { "type": "string" }
+      }
+    }
+  }
+}

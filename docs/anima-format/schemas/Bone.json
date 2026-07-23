@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://anima.dev/schemas/Bone.json",
+  "title": "Bone",
+  "type": "object",
+  "required": ["id", "name", "length", "rest"],
+  "additionalProperties": false,
+  "properties": {
+    "id": { "type": "string" },
+    "name": { "type": "string" },
+    "parentId": { "type": ["string", "null"] },
+    "length": { "type": "number", "exclusiveMinimum": 0 },
+    "rest": {
+      "type": "object",
+      "required": ["x", "y", "rotation", "scaleX", "scaleY"],
+      "properties": {
+        "x": { "type": "number" },
+        "y": { "type": "number" },
+        "rotation": { "type": "number" },
+        "scaleX": { "type": "number" },
+        "scaleY": { "type": "number" }
+      }
+    },
+    "ik": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "targetId": { "type": ["string", "null"] },
+        "poleId": { "type": ["string", "null"] },
+        "solver": { "type": "string", "enum": ["fabrik", "ccd", "twoBone"] }
+      }
+    },
+    "limits": {
+      "type": "object",
+      "properties": {
+        "rotationMin": { "type": "number" },
+        "rotationMax": { "type": "number" }
+      }
+    },
+    "smartDrivers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "channelId": { "type": "string" },
+          "inputMin": { "type": "number" },
+          "inputMax": { "type": "number" }
+        }
+      }
+    },
+    "metadata": { "type": "object", "additionalProperties": true }
+  }
+}

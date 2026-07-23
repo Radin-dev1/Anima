@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://anima.dev/schemas/Node.json",
+  "title": "Node",
+  "description": "Composite Space graph node",
+  "type": "object",
+  "required": ["id", "type", "params"],
+  "additionalProperties": false,
+  "properties": {
+    "id": { "type": "string" },
+    "name": { "type": "string" },
+    "type": {
+      "type": "string",
+      "description": "Namespaced node type, e.g. blur.gaussian, source.scene"
+    },
+    "position": {
+      "type": "object",
+      "properties": {
+        "x": { "type": "number" },
+        "y": { "type": "number" }
+      }
+    },
+    "inputs": {
+      "type": "object",
+      "additionalProperties": { "type": "string" },
+      "description": "Port name → nodeId.port or asset ref"
+    },
+    "params": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "outputs": {
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    },
+    "enabled": { "type": "boolean", "default": true },
+    "metadata": { "type": "object", "additionalProperties": true }
+  }
+}

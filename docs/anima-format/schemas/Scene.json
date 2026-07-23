@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://anima.dev/schemas/Scene.json",
+  "title": "Scene",
+  "type": "object",
+  "required": ["id", "name", "fps", "width", "height", "durationFrames", "layers"],
+  "additionalProperties": false,
+  "properties": {
+    "id": { "type": "string" },
+    "name": { "type": "string" },
+    "fps": { "type": "number", "exclusiveMinimum": 0 },
+    "width": { "type": "integer", "minimum": 1 },
+    "height": { "type": "integer", "minimum": 1 },
+    "durationFrames": { "type": "integer", "minimum": 1 },
+    "backgroundColor": {
+      "type": "array",
+      "items": { "type": "number" },
+      "minItems": 4,
+      "maxItems": 4
+    },
+    "camera": {
+      "type": "object",
+      "properties": {
+        "x": { "type": "number" },
+        "y": { "type": "number" },
+        "zoom": { "type": "number" },
+        "rotation": { "type": "number" }
+      }
+    },
+    "layers": {
+      "type": "array",
+      "items": { "$ref": "Layer.json" }
+    },
+    "channels": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "layerId", "path", "keyframes"],
+        "properties": {
+          "id": { "type": "string" },
+          "layerId": { "type": "string" },
+          "path": { "type": "string", "description": "e.g. frames, transform.x, bone.rot" },
+          "keyframes": {
+            "type": "array",
+            "items": { "$ref": "Keyframe.json" }
+          }
+        }
+      }
+    },
+    "bones": {
+      "type": "array",
+      "items": { "$ref": "Bone.json" }
+    },
+    "compositeGraph": {
+      "type": "object",
+      "properties": {
+        "nodes": {
+          "type": "array",
+          "items": { "$ref": "Node.json" }
+        },
+        "outputNodeId": { "type": "string" }
+      }
+    },
+    "markers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "frame": { "type": "integer" },
+          "name": { "type": "string" },
+          "color": { "type": "string" }
+        }
+      }
+    },
+    "metadata": { "type": "object", "additionalProperties": true }
+  }
+}
