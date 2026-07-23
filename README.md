@@ -4,22 +4,15 @@
 
 ANIMA is a unified 2D/hybrid animation platform that merges frame-by-frame drawing, bone/mesh rigging with live performance capture, and node-based compositing into a single non-destructive scene graph — with AI that always emits editable native data, never baked pixels.
 
-## Quick links
+## Open the app
 
-| Document | Description |
-|----------|-------------|
-| [Product Spec](docs/PRODUCT_SPEC.md) | Full Parts 1–8: vision, workspaces, timeline, collab, AI, architecture, UX, export |
-| [Architecture](docs/ARCHITECTURE.md) | Mermaid diagrams: engine, workspaces, AI, sync, render pipeline |
-| [Wireframes](docs/WIREFRAMES.md) | ASCII layouts for Draw / Rig / Composite / Sequence Editor |
-| [Roadmap](docs/ROADMAP.md) | 12-month / 6-milestone plan with team & risks |
-| [`.anima` Format](docs/anima-format/SCHEMA.md) | Zip layout + schema index |
-| [JSON Schemas](docs/anima-format/schemas/) | Layer, Bone, Keyframe, Node, Scene, Project |
-| [Example Scene](docs/anima-format/examples/bouncing-ball-scene.json) | Bouncing ball + rig + glow node |
-| [Prototype](prototype/README.md) | Week-1 in-browser PoC plan & run instructions |
+**The deployed site is the Draw Space prototype** (canvas, onion skin, layers, timeline, GIF export) — not a docs landing page.
 
-## Run the prototype
+**[→ Launch ANIMA Draw Space](https://radin-dev1.github.io/Anima/)**
 
-Week-1 PoC: frame-by-frame drawing, onion skinning, layers, timeline playback, GIF export.
+> First-time setup: in the repo **Settings → Pages → Build and deployment → Source**, choose **GitHub Actions** if Pages is not already wired. Pushes to `main` rebuild and redeploy the app automatically.
+
+## Run locally
 
 ```bash
 cd prototype
@@ -27,7 +20,20 @@ npm install
 npm run dev
 ```
 
-Open the URL Vite prints (typically `http://localhost:5173`).
+Open the URL Vite prints (typically `http://localhost:5173`). For a production build: `npm run build` → `prototype/dist` (served under `/Anima/` on Pages).
+
+## Documentation
+
+Specs live in the repo under `/docs` (they are **not** the public homepage).
+
+| Document | Description |
+|----------|-------------|
+| [Product Spec](docs/PRODUCT_SPEC.md) | Parts 1–8: vision, workspaces, timeline, collab, AI, architecture, UX, export |
+| [Architecture](docs/ARCHITECTURE.md) | Mermaid diagrams: engine, workspaces, AI, sync, render pipeline |
+| [Wireframes](docs/WIREFRAMES.md) | ASCII layouts for Draw / Rig / Composite / Sequence Editor |
+| [Roadmap](docs/ROADMAP.md) | 12-month / 6-milestone plan |
+| [`.anima` Format](docs/anima-format/SCHEMA.md) | Zip layout + schema index |
+| [Prototype notes](prototype/README.md) | Week-1 PoC plan |
 
 ## Pricing (summary)
 
@@ -42,7 +48,7 @@ See [PRODUCT_SPEC.md § Part 1](docs/PRODUCT_SPEC.md) for exact feature gates.
 ## Architectural spine
 
 - **Scene graph**: `Project → Sequences → Scenes → Layers → Channels → Keyframes`
-- **Three workspaces**: Draw · Rig · Composite — **lenses** on one graph + timeline ([Part 2](docs/PRODUCT_SPEC.md#part-2--three-workspace-architecture)); switch never converts/destroys data; edit only in home workspace (`Tab` cycles)
+- **Three workspaces**: Draw · Rig · Composite — lenses on one graph + timeline ([Part 2](docs/PRODUCT_SPEC.md#part-2--three-workspace-architecture))
 - **Core**: Rust + wgpu; desktop shell Tauri + React; web reduced WASM build
 - **Collab**: Yjs CRDT; Git-semantics version control with visual diff
 - **AI rule**: every AI feature outputs editable native ANIMA data
@@ -51,17 +57,10 @@ See [PRODUCT_SPEC.md § Part 1](docs/PRODUCT_SPEC.md) for exact feature gates.
 
 ```
 Anima/
-├── README.md
-├── docs/
-│   ├── PRODUCT_SPEC.md
-│   ├── ARCHITECTURE.md
-│   ├── WIREFRAMES.md
-│   ├── ROADMAP.md
-│   └── anima-format/
-│       ├── SCHEMA.md
-│       ├── schemas/*.json
-│       └── examples/bouncing-ball-scene.json
-└── prototype/          # Vite + TypeScript in-browser PoC
+├── README.md                 # Repo readme (GitHub view)
+├── .github/workflows/        # Pages deploy → prototype/dist
+├── docs/                     # Product specs (not the live site)
+└── prototype/                # Vite + TS Draw Space app (= deployment)
 ```
 
 ## License

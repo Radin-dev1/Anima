@@ -22,6 +22,9 @@ npm run dev
 
 Then open the URL Vite prints (default `http://localhost:5173`).
 
+**Live deployment:** the GitHub Pages site **is this app** — https://radin-dev1.github.io/Anima/  
+(`npm run build` with `base: '/Anima/'`; CI deploys `prototype/dist` on every push to `main`.)
+
 ## Features
 
 - Frame-by-frame drawing (pointer / stylus pressure when available)
