@@ -1,6 +1,6 @@
 # ANIMA Product Specification
 
-**Version:** 0.1.0-draft  
+**Version:** 0.2.0-draft  
 **Status:** Canonical for M1–M6 planning  
 **Format companion:** [`anima-format/SCHEMA.md`](./anima-format/SCHEMA.md)
 
@@ -35,7 +35,7 @@ Give independent creators and small studios a Harmony-class pipeline without Har
 
 ## 1.5 Core differentiators
 
-1. **Three workspaces, one graph** — Draw / Rig / Composite never bake to flatten; switch preserves channels.
+1. **Three workspaces, one graph** — Draw / Rig / Composite are lenses on one scene graph; switch never converts/exports/destroys data; layers editable only in home workspace.
 2. **AI → native data only** — Inbetweens are vector/raster strokes on layers; auto-rig is bones+weights; no “AI video” dead ends.
 3. **LIVE PERFORMANCE MODE** — Webcam face, mic lipsync (12 visemes), hands, MIDI/gamepad → keyframes at &lt;100 ms glass-to-glass budget.
 4. **Yjs collab + Git-semantics VC** — Soft locks and presence for live work; commits/branches/visual diffs for durable history.
@@ -87,314 +87,596 @@ Give independent creators and small studios a Harmony-class pipeline without Har
 
 # PART 2 — Three-Workspace Architecture
 
-**Shared rule:** Workspaces are *views* over the same `Scene` graph. Switching never rasterizes unless the user explicitly flattens a layer. Active tool, camera, and selection persist per-workspace in `workspaceState` but timeline playhead is global.
+### Full specification: Draw Space · Rig Space · Composite Space
 
-**On switch:**
-1. Flush pending stroke/deform buffers to channels.
-2. Rebind GPU resources for the target workspace’s default toolset.
-3. Preserve selection if the selected node exists in the target view’s filter; else clear selection.
-4. Emit `workspace.changed` for collab presence badges.
+All three workspaces are *lenses* on one scene graph and one timeline. Switching workspaces never converts, exports, or destroys data — it changes which tools and panels are active and which layer types are editable in place.
+
+**Canonical status:** This Part 2 is the authoritative workspace architecture for ANIMA. Part 3 (timeline & scene graph schemas) follows below and will deepen the shared data model without redefining workspace behavior.
+
+### Global rules for all workspaces
+
+| Rule | Spec |
+|------|------|
+| Shared state | Timeline, playhead, scene graph, **one project-wide undo stack**, color palettes, asset library |
+| Visibility vs editability | Any layer type is **visible** in every workspace; it is **editable** only in its **home workspace**. Selecting a foreign layer offers **Jump to home workspace** (one action). `Tab` cycles Draw → Rig → Composite → Draw |
+| Switch preserves | Zoom, pan, selected layer, playhead, and **per-workspace panel layout** |
+| Non-destructive | All edits are modifiers/nodes/channels unless the user explicitly **bakes** / flattens |
+| On switch (engine) | Flush pending stroke/deform/Live buffers → rebind GPU tool pipelines → emit `workspace.changed` for collab presence — **no bake, no export, no data loss** |
+
+**Home workspace by layer type**
+
+| Layer / data type | Home workspace |
+|-------------------|----------------|
+| `rasterStroke`, `vectorStroke`, `fill`, `cel`, stop-motion capture frames | Draw |
+| `mesh`, bones, weights, swap sets, Live takes / behavior blocks | Rig |
+| Composite graph nodes, AE-style projected layers, mograph/text, procedural env, sequence assembly clips | Composite |
 
 ---
 
-## 2A — Draw Space
+## 2A — DRAW SPACE (traditional / frame-by-frame)
+
+**Sources / DNA:** Pencil2D, FlipaClip, DigiCel FlipBook, OpenToonz, TupiTube, Toon Boom Harmony (X-sheet).
 
 ### Panel layout (default, Standard density)
 
-| Region | % width/height | Panels |
-|--------|----------------|--------|
-| Left | 18% W | Tool shelf, Brush presets, Color/Ink |
-| Center | 52% W × 70% H (above timeline) | Canvas (GPU hybrid) |
-| Right | 30% W | Layers / Cels, X-Sheet, Onion/Light Table |
-| Bottom | 100% W × 30% H | Unified Timeline + Audio scrub |
+| Region | Proportion | Panels |
+|--------|------------|--------|
+| Top bar | ~4% H | Workspace tabs, scene name, fps, density, presence |
+| Left | **18% W** | Tool shelf, Brush presets, Color / Ink / Palette |
+| Center | **52% W × ~66% H** | Canvas (GPU hybrid); light-table underlay |
+| Right | **30% W** | Layers / Drawing Bank / Cels · X-Sheet · Onion / Light Table |
+| Bottom | **100% W × ~30% H** | Unified Timeline + audio scrub (shared) |
 
 ### Default toolset
 
-Pencil, Ink Pen, Soft Brush, Hard Eraser, Soft Eraser, Fill Bucket, Lasso Select, Transform, Eyedropper, Hand, Zoom, Flip Peek, Cel Swap.
+Brush, Pencil, Ink Pen, Soft Brush, Marker, Airbrush, Texture Brush, Hard Eraser, Soft Eraser, Fill Bucket, Lasso / Marquee Select, Transform, Eyedropper, Hand, Zoom, Rotate View, Flip Peek, Mirror Guide, Cel Swap, Light Table Pin.
 
-### Keyboard map (Draw defaults — remappable)
+### Keyboard map (Draw — remappable; Blender/AE/Harmony/Photoshop maps available in Part 7)
 
 | Key | Action |
 |-----|--------|
+| `Tab` | Cycle workspace (global) |
 | `B` | Brush |
 | `E` | Eraser |
-| `G` | Fill |
+| `G` | Fill bucket |
 | `V` | Transform |
 | `I` | Eyedropper |
-| `[` / `]` | Brush size −/+ |
-| `{` / `}` | Softness −/+ |
-| `,` / `.` | Prev / next frame |
-| `Shift+,` / `Shift+.` | Prev / next keyframe only |
+| `H` | Hand / pan |
+| `Z` | Zoom tool (or `Ctrl`+scroll) |
+| `[` / `]` | Brush size − / + |
+| `{` / `}` | Softness / hardness − / + |
+| `,` / `.` | Previous / next frame |
+| `Shift+,` / `Shift+.` | Previous / next **key** frame only |
 | `O` | Toggle onion skin |
-| `L` | Light table |
+| `Shift+O` | Onion keys-only mode |
+| `L` | Light table panel focus / toggle |
 | `F` | Flip peek (hold) |
-| `1`–`9` | Cel swap slots |
-| `Space` | Pan (hold) / Play-pause when not over canvas drag |
-| `Ctrl+Z` / `Ctrl+Shift+Z` | Undo / Redo |
+| `Shift+F` | Mirror view horizontal |
+| `R` | Rotate canvas (hold + drag); `Shift+R` reset rotation |
+| `1`–`9` | Cel / swap-slot assign under playhead |
+| `0` | Clear swap slot / restore previous cel |
+| `Space` | Play / pause (when not mid-stroke); hold+drag = temporary pan |
+| `Ctrl+Z` / `Ctrl+Shift+Z` | Undo / Redo (project-wide stack) |
 | `Ctrl+S` | Save / commit draft |
-
-### Canvas engine
-
-- **GPU raster + vector hybrid:** Strokes stored as pressure-rich polylines (`StrokePath`) with optional baked raster cache tiles (256×256, mipmapped). Vector remains source of truth for scale & AI; raster cache for paint-over and soft brushes.
-- **Pointer:** Supports pressure (0–1), tilt (altitude/azimuth), velocity (px/ms). Velocity modulates size/opacity via brush curves.
-- **Stabilization:** Dual mode — **pull-string** (length `L` px, default 12) + **averaging window** (`N` samples, default 5). Predictive smoothing extrapolates 1 sample ahead using last 3 deltas to reduce perceived lag (*justification:* pull-string for intentional curves; averaging for tremor; prediction recovers latency).
-- **Coordinate space:** Scene camera → canvas view matrix; strokes in layer local space.
-
-### Brush system
-
-**Parameters per brush:**
-
-```ts
-interface BrushParams {
-  sizePx: number;              // 0.5–1024
-  sizePressure: Curve;         // maps pressure → size multiplier
-  opacity: number;             // 0–1
-  opacityPressure: Curve;
-  flow: number;                // 0–1 per dab
-  spacing: number;             // fraction of size, default 0.12
-  hardness: number;            // 0–1 (raster)
-  scatter: number;             // 0–1
-  angle: number;               // degrees
-  angleJitter: number;
-  tiltAffordance: boolean;     // size/angle from stylus tilt
-  velocitySize: Curve;
-  blendMode: BlendMode;
-  color: ColorRgbaLinear;
-  antiAlias: boolean;
-  vectorMode: 'polyline' | 'ribbon' | 'rasterOnly';
-}
-```
-
-**Default brush set:** Pencil HB, Pencil 2B, Ink Nib, Ink Brush, Soft Air, Flat Marker, Texture Grain, Hard Eraser, Soft Eraser, Mix Blender.
-
-**`.abr` import:** Parse Adobe Brush ABR v6/v7 brush tips into raster tip textures + approximate dynamics curves; store as `BrushPreset` with `source: "abr"`. Unsupported dynamics fall back to pressure size/opacity only (*justification:* 90% of community brushes are tip+pressure).
-
-### Onion skinning
-
-| Param | Spec |
-|-------|------|
-| Before / After count | `N_before`, `N_after` ∈ 0–10 (default 3/3) |
-| Tinting | Before = cool `#5B8CFF` @ multiply; After = warm `#FF8A5B` @ multiply |
-| Opacity falloff | `opacity_i = base * falloff^|i|` where `falloff` default 0.72 |
-| Keyframes only | Optional filter: show only frames with keys on active layer |
-| Relative to camera | Optional: transform onion frames by camera delta so pans don’t ghost incorrectly |
-
-### Light table
-
-Semi-transparent stack of selected reference layers/cels under the active drawing layer; opacity per-ref; can pin a still image or video frame. Does not write to export unless “flatten light table” is invoked.
-
-### X-sheet bidirectional sync
-
-X-Sheet columns map 1:1 to layers (or cel exposure columns). Editing exposure duration in X-Sheet writes `hold`/`empty` into the layer’s frame channel; scrubbing timeline highlights X-Sheet row. Cel labels, timing charts, and lip-sync viseme rows share the same frame index domain.
-
-### Cel system
-
-| Feature | Behavior |
-|---------|----------|
-| Substitution | Named cel library per layer; exposure points to `celId` |
-| Auto-hold | Empty frames after a drawing inherit previous cel until next key |
-| Cycles | `cycle(celIds[], lengthFrames)` channel modifier |
-| Swap-on-keypress | Hotkeys `1`–`9` assign/swap cel under playhead for lip-sync / FX |
-
-### Cleanup pipeline
-
-Stages as non-destructive node stack on layer: **Despeckle → Centerline / Contour smooth → Gap close → Stroke unify**. Each stage stores params; output is a new editable stroke layer (or channel override), original preserved in stack.
-
-### Paint & fill
-
-- Gap-aware flood fill with `gapTolerancePx` (default 2).
-- Region fill to vector closed paths when source strokes are vector.
-- Flat color layers separate from line art; auto-color AI writes flat regions as fill paths.
-
-### Flipping controls
-
-Hold `F` or dedicated pedal mapping: ping-pong ±`K` frames (default 2) at `flipHz` (default 8). Used for arcs/volume checks.
-
-### Mobile / touch mode
-
-- Larger hit targets (Pro density off; Quick density default).
-- Two-finger pan/zoom; Apple Pencil / Samsung S-Pen pressure.
-- Tool shelf collapses to radial menu.
-- Same `.anima` file; reduced brush set cached locally.
+| `Ctrl+J` | Jump to home workspace of selected layer |
+| `M` | Toggle canvas mirror guide |
+| `Ctrl+[` / `Ctrl+]` | Prev / next drawing in Drawing Bank |
 
 ---
 
-## 2B — Rig Space
+### 2A.1 Canvas Engine
+
+**Hybrid stroke model.** Each stroke is stored as a pressure/tilt/velocity-rich polyline (`StrokePath`) that remains the **source of truth**. Soft brushes and fills may stamp into a **GPU raster cache** of **256×256** mipmapped tiles keyed by `(layerId, frame, cameraHash)`. Vector paths drive scale-independent edits, AI cleanup, and export; tiles accelerate paint-over and display.
+
+**Pointer dynamics.** Sample at display rate (≥60 Hz, prefer stylus report rate):
+
+| Channel | Range | Use |
+|---------|-------|-----|
+| Pressure | 0–1 | Size, opacity, flow curves |
+| Tilt altitude / azimuth | device radians | Angle, oval stamp, calligraphy |
+| Velocity | px/ms | Optional size/opacity falloff; predictive smoothing input |
+
+**Stabilization (mutually selectable primary mode + optional prediction).**
+
+| Mode | Behavior | Default |
+|------|----------|---------|
+| **Pull-string** | Cursor leads; stroke anchor trails at string length `L` px (1–64, default **12**) | Preferred for intentional curves |
+| **Averaging** | Trailing window of `N` samples (2–16, default **5**) | Preferred for tremor / mouse |
+| Strength | 0–100% blend between raw and stabilized | 60% |
+
+**Predictive smoothing:** extrapolate one sample ahead with **Catmull-Rom** over the last four stabilized points; clamp prediction to ≤8 px. *Justification:* recovers perceived latency without the rubber-band feel of heavy averaging alone.
+
+**View transforms (canvas chrome, non-destructive).**
+
+| Control | Spec |
+|---------|------|
+| Pan / zoom | Standard; zoom 1%–6400% |
+| **Rotate view** | Free rotate; does not alter layer data |
+| **Flip view** | Temporary horizontal/vertical flip for handedness check |
+| **Mirror guide** | Vertical/horizontal symmetry drawing (writes mirrored strokes as real data on commit) |
+
+**Coordinate spaces.** Pointer → view matrix → scene camera → **layer local space** (strokes stored here). Onion “relative to camera” reprojects prior frames by camera delta at draw time only.
+
+---
+
+### 2A.2 Brush System
+
+**Parameter table**
+
+| Parameter | Type | Range / notes |
+|-----------|------|----------------|
+| `sizePx` | float | 0.5–1024 |
+| `sizePressure` | curve | pressure → size multiplier |
+| `opacity` | float | 0–1 |
+| `opacityPressure` | curve | |
+| `flow` | float | 0–1 per dab |
+| `spacing` | float | fraction of size; default 0.12 |
+| `scatter` | float | 0–1 positional jitter |
+| `textureGrain` | asset ref + depth | tip texture / grain map |
+| `wetEdge` | float | 0–1 watercolor edge darkening (raster) |
+| `hardness` | float | 0–1 |
+| `angle` / `angleJitter` | deg | tip rotation |
+| `tiltAffordance` | bool | use stylus tilt |
+| `velocitySize` | curve | optional |
+| `blendMode` | enum | srcOver, multiply, screen, overlay, behind, erase |
+| `vectorMode` | enum | `polyline` \| `ribbon` \| `rasterOnly` |
+| `antiAlias` | bool | default true |
+
+**Default brush set (10)**
+
+| # | Name | Role |
+|---|------|------|
+| 1 | Pencil HB | Hard graphite line |
+| 2 | Pencil 2B | Soft construction |
+| 3 | Ink Nib | Crisp vector-friendly ink |
+| 4 | Ink Brush | Calligraphic pressure |
+| 5 | Flat Marker | Comic fill lines |
+| 6 | Soft Air | Shading / mist |
+| 7 | Texture Grain | Paper grain stamp |
+| 8 | Hard Eraser | Pixel/vector hard delete |
+| 9 | Soft Eraser | Feathered erase |
+| 10 | Mix Blender | Smudge / wet mix |
+
+**`.abr` import.** ABR v6/v7 tip images + approximate dynamics → `BrushPreset` with `source: "abr"`. Unsupported dynamics degrade to pressure size/opacity. *Justification:* covers the majority of community brush packs.
+
+**Brush lock.** Toggle locks size/opacity/color against accidental `[`/`]` and palette clicks during long takes; lock state is per-tool and persisted in workspace state.
+
+---
+
+### 2A.3 Onion Skinning
+
+| Param | Spec |
+|-------|------|
+| Range | `N_before`, `N_after` ∈ 0–10 (default **3 / 3**) |
+| Tint | Before = cool **`#5B8CFF`**; After = warm **`#FF8A5B`** (multiply over stroke albedo) |
+| Falloff | `opacity_i = base * falloff^|i|`, `falloff` default **0.72**, base default **0.55** |
+| **Keys-only** | Show only frames that have key drawings on the onion target layer(s) |
+| **Relative to camera** | Reproject onion frames by camera transform delta so pans don’t leave incorrect ghosts |
+| **Cross-layer onion** | Optionally include selected additional layers (e.g. rough under clean) with independent opacity |
+
+Onion never writes pixels; it is a view-time composite.
+
+---
+
+### 2A.4 Light Table
+
+Pinned references under the active drawing layer:
+
+- Any layer from the **current scene**, another scene in the project, or an imported still / video frame
+- Per-ref: opacity, desaturation, blend (normal/multiply), offset XY, solo
+- Does **not** appear in final export unless user invokes **Flatten light table** (explicit bake → new layer)
+
+---
+
+### 2A.5 X-Sheet (Exposure Sheet)
+
+Full Toon Boom / OpenToonz-style column view, **bidirectionally synced** with the unified timeline.
+
+| Column type | Contents |
+|-------------|----------|
+| Frame # | Absolute scene frame |
+| Layer / cel columns | Exposure, holds, empties, cel labels |
+| Timing chart | Tick marks / inbetween notation (stored as metadata on exposures) |
+| Audio | Waveform thumbnail column; lipsync viseme lane when present |
+
+**Sync rules:** Edit exposure length in X-sheet → writes hold/empty into the layer’s frame channel. Scrub timeline → highlight X-sheet row. Reorder columns ↔ reorder layer stack. Same integer frame domain as Part 3 timeline.
+
+---
+
+### 2A.6 Cel System
+
+| Feature | Spec |
+|---------|------|
+| **Drawing bank** | Per-layer library of named drawings (`drawingId`); exposures reference bank IDs instead of duplicating stroke data |
+| Substitution | One drawing reused across many frames via exposure pointers |
+| **Auto-hold** | Empty frames inherit previous exposure until next key |
+| **Cycles** | `cycle(drawingIds[], times\|frameLength)` modifier on the exposure channel |
+| **Swap-on-keypress** | Hotkeys `1`–`9` map to bank slots (mouth shapes, hands); press writes/replaces exposure at playhead |
+
+Drawing bank assets live under `assets/drawings/` in `.anima` (see format notes); Part 3 will formalize `Drawing` / `Exposure` channel schemas.
+
+---
+
+### 2A.7 Cleanup Pipeline
+
+Ordered, **non-destructive** stage stack on a Draw layer (or as sibling output layers):
+
+**Rough → Tie-down → Clean → Color**
+
+| Stage | Purpose | Output |
+|-------|---------|--------|
+| Rough | Construction / gesture | Editable strokes |
+| Tie-down | Volume / perspective fix | New layer or override stack entry |
+| Clean | Final line (centerline/contour smooth, gap close, stroke unify, despeckle) | Editable clean strokes |
+| Color | Flats / tones | Fill paths / paint layer |
+
+AI-assisted cleanup (Part 5) is an **optional pass** that inserts native strokes into the Clean stage — never a baked video plate. Original Rough always retained unless user deletes.
+
+---
+
+### 2A.8 Paint & Fill
+
+| Feature | Spec |
+|---------|------|
+| Bucket | Flood fill with **gap close**; `gapTolerancePx` default **2** (0–16) |
+| Vector fill | Prefer closed vector regions when source is vector; else raster fill on color layer |
+| Palettes | Project-wide palette refs; swatches are linear RGB with display transform |
+| **Costume variants** | Palette swap sets remapping named roles (`skin`, `shirt`, …) without rewriting fills |
+| **Shadow / highlight** | Auto-generate from line art + light angle as editable fill regions (user-refinable); stored as native fills |
+
+---
+
+### 2A.9 Flipping Controls
+
+FlipBook-style rapid review:
+
+| Binding | Behavior |
+|---------|----------|
+| Hold `F` | Ping-pong ±`K` frames (default K=2) at `flipHz` (default **8**) |
+| Scroll / stylus button | User-mappable flip next/prev |
+| Pedal | HID mapping via preferences |
+
+Used for arcs, volume, and timing checks; does not alter data.
+
+---
+
+### 2A.10 Mobile / Touch Mode
+
+FlipaClip-style simplified chrome (Quick density default):
+
+- Full-screen canvas; collapsible radial tool menu
+- Two-finger pan/zoom; **two-finger tap = undo**; **three-finger tap = redo**
+- Pinch-horizontal on timeline edge = scrub
+- Pressure from Apple Pencil / S-Pen when available
+- Same `.anima` project; reduced brush preset cache for offline tablet
+
+---
+
+## 2B — RIG SPACE (puppet / cutout / 3D)
+
+**Sources / DNA:** Moho, Cartoon Animator 5, Adobe Character Animator, Blender (reduced), Synfig.
 
 ### Panel layout
 
-| Region | Content |
-|--------|---------|
-| Left | Rig tools, Bone tree, Constraints, Dynamics |
-| Center | Viewport (2D mesh + optional 3D overlay), camera controls |
-| Right | Properties, Deform weights, Layer-swap map, Live Performance panel |
-| Bottom | Timeline (bone channels, takes) |
+| Region | Proportion | Panels |
+|--------|------------|--------|
+| Left | **16% W** | Rig tools, Bone tree, Constraints, Dynamics |
+| Center | **~54% W** | Viewport (2D mesh + optional 3D); camera controls |
+| Right | **30% W** | Properties · Weight paint · Layer-swap map · **LIVE PERFORMANCE** · Behaviors |
+| Bottom | Shared timeline | Bone channels, takes, behavior layers |
 
 ### Default toolset
 
-Bone Create, Bone Edit, FK Pose, IK Handle, Weight Paint, Mesh Bind, Smart Bone Angle, Constraint Add, Layer Swap Map, Live Rec, Take Marker.
+Bone Create, Bone Edit, FK Pose, IK Handle, Smart Bone, Constraint Add, Dynamics Paint, Mesh Generate/Edit, Weight Paint, Wrap/Curve Deformer, Layer Swap Map, Live Arm, Live Rec, Take Marker, Behavior Drop, Auto-Rig.
 
 ### Keyboard map (Rig)
 
 | Key | Action |
 |-----|--------|
+| `Tab` | Cycle workspace (global) |
 | `Ctrl+B` | Add bone |
-| `Tab` | FK / IK toggle on selected chain |
-| `Q` / `W` / `E` | Select / Pose / Weight |
+| `Y` | Toggle FK / IK on selected chain |
+| `Q` / `W` / `E` | Select / Pose / Weight modes |
 | `R` | Record Live take (toggle) |
-| `T` | Insert take as keys |
-| `Ctrl+R` | Auto-rig selected mesh/sprites |
+| `T` | Apply / insert take as keyframes |
+| `Ctrl+R` | Auto-rig selection |
+| `Ctrl+J` | Jump to home workspace of selection |
 | `,` / `.` | Frame step |
+| `1`–`9` | Trigger swap sets / behaviors (when Live armed) |
+| `Space` | Play / pause |
 
-### 2D bones
+---
 
-- **FK / IK:** Two-bone and multi-bone CCD + FABRIK solvers; pole vectors; angle limits.
-- **Smart bones:** Angle or translation of a control bone drives deformation / layer visibility / mesh morph via keyed curves.
-- **Constraints:** Parent, Aim, Position, Rotation, Scale, Copy Transform, Spring (damped), Path.
-- **Dynamics:** Verlet hair/cloth-lite on bone chains; bake to keys for export determinism.
+### 2B.1 2D Bone System
 
-### Mesh deformation
+| Feature | Spec |
+|---------|------|
+| Hierarchy | Parent/child bones; length, rest pose, scale |
+| **FK / IK** | Per-chain switch; solvers: two-bone analytic, **FABRIK**, **CCD**; pole vectors; angle limits |
+| **Smart bones** | Control bone rotation/translation drives corrective mesh deform, layer visibility, or morphs via keyed curves (Moho-style) |
+| **Constraints** | Target/aim, angle limits, position/rotation/scale copy, path, **squash-and-stretch** bones |
+| **Dynamics** | Spring/damping Verlet on chains (hair, tails, cloth-lite); **bake to keys** for deterministic export/collab |
 
-Skinning: linear blend skinning (max 4 influences/vertex). Lattice / envelope optional. Mesh stored as `MeshDeform` with bind pose; drawing layers can be textured onto mesh or vector warped via cage.
+---
 
-### Layer-swap rigging
+### 2B.2 Mesh Deformation
 
-Map bone/control states to cel swaps (mouth shapes, hands). Driven by float channels or Live viseme stream.
+- Auto mesh from artwork silhouette; manual vertex edit
+- Weight painting with heat-map visualization; max **4** influences/vertex (LBS)
+- Wrap deformers; curve/path deformers for ribbons and tails
+- Bind pose stored on `MeshDeform`; Draw layers can texture or cage-warp onto mesh
 
-### Reduced 3D
+---
 
-| Import | glTF 2.0, FBX, OBJ |
-|--------|---------------------|
-| Rig | FK/IK on imported skeletons |
-| Shading | PBR + **toon / NPR** ramp materials |
-| Camera | **Unified** with 2D scene camera (orthographic or perspective) |
-| Physics | Simulate in session → **bake to keyframes** (no runtime physics in final `.anima` playback) |
+### 2B.3 Layer-Swap Rigging
 
-*Justification:* Baking physics keeps playback deterministic across collab clients and render farm.
+Cartoon Animator-style sprite / cel swapping for hands, mouths, eyes:
 
-### LIVE PERFORMANCE MODE (full spec)
+- Swap sets reference **Drawing Bank** / sprite sheets
+- **Angle-based auto-selection:** character turn / control angle picks the correct sprite
+- Driven by float channels, smart bones, or Live viseme / trigger streams
 
-**Goal:** Drive facial / lip / hand / trigger params into channels with **&lt;100 ms** motion-to-viewport latency.
+---
 
-#### Inputs → params
+### 2B.4 3D Subsystem (deliberately reduced)
 
-| Source | Output params |
-|--------|---------------|
-| Webcam face (MediaPipe / custom ONNX) | `browL`, `browR`, `eyeOpenL/R`, `eyeX/Y`, `jawOpen`, `mouthSmile`, `mouthFunnel`, `headYaw/Pitch/Roll` — each float 0–1 or ±1 |
+| Capability | Spec |
+|------------|------|
+| Import | **glTF 2.0**, FBX, OBJ |
+| Animation | Pose-based FK/IK on imported skeletons |
+| Modeling | Basic primitives + extrusion only (not a full DCC) |
+| Materials | PBR + **toon / NPR** ramps + line rendering to match 2D |
+| Camera | **One unified** 2D/3D scene camera (ortho or perspective) |
+| Physics | Rigid body, cloth, hair — simulate in session → **bake to keyframes** (no runtime physics in playback) |
+
+*Justification:* Baking keeps farm/collab deterministic and matches 2D channel mental model.
+
+---
+
+### 2B.5 LIVE PERFORMANCE MODE
+
+Character Animator–class puppeteering with editable native outputs.
+
+#### Inputs → rig parameters
+
+| Source | Mapped params (examples) |
+|--------|---------------------------|
+| Webcam face | `headYaw/Pitch/Roll`, `browL/R`, `eyeOpenL/R`, `eyeX/Y`, `jawOpen`, `mouthSmile`, `mouthFunnel` — each with sensitivity + smoothing |
 | Mic lipsync | 12-viseme weights + energy |
-| Hand tracking | Wrist, finger curl floats; gesture enums |
-| Keyboard / MIDI / gamepad | Discrete triggers & continuous CC → channels |
+| Hand tracking | Wrist, finger curls; gesture enums → arm/hand bones |
+| Keyboard / MIDI / gamepad | Swap sets, replays, behavior triggers (wave, jump, walk) |
 
 #### 12-viseme set
 
-`REST, A, E, I, O, U, F_V, L, W_Q, M_B_P, C_D_G_K_N_S_Z_TH, R`
+`REST`, `A`, `E`, `I`, `O`, `U`, `F_V`, `L`, `W_Q`, `M_B_P`, `C_D_G_K_N_S_Z_TH`, `R`
 
-#### Phoneme → viseme table (English ARPAbet subset)
+#### Phoneme → viseme mapping (English ARPAbet subset)
 
 | Phonemes | Viseme |
 |----------|--------|
-| `.` silence / SP | REST |
-| `AA, AH, AO` | A |
-| `EH, AE` | E |
-| `IY, IH, AY` | I |
-| `OW, OY` | O |
-| `UW, UH, AW` | U |
-| `F, V` | F_V |
-| `L, EL` | L |
-| `W, WH, Q` | W_Q |
-| `M, B, P` | M_B_P |
-| `CH, JH, SH, ZH, DH, TH, S, Z, T, D, G, K, N, NG` | C_D_G_K_N_S_Z_TH |
-| `R, ER` | R |
+| silence / `SP` / `.` | REST |
+| `AA`, `AH`, `AO` | A |
+| `EH`, `AE` | E |
+| `IY`, `IH`, `AY` | I |
+| `OW`, `OY` | O |
+| `UW`, `UH`, `AW` | U |
+| `F`, `V` | F_V |
+| `L`, `EL` | L |
+| `W`, `WH`, `Q` | W_Q |
+| `M`, `B`, `P` | M_B_P |
+| `CH`, `JH`, `SH`, `ZH`, `DH`, `TH`, `S`, `Z`, `T`, `D`, `G`, `K`, `N`, `NG` | C_D_G_K_N_S_Z_TH |
+| `R`, `ER` | R |
 
-Streaming ASR/phoneme aligner updates viseme weights with 30–50 ms audio look-ahead buffer; display delayed by same buffer to keep A/V sync inside latency budget.
+Audio path uses 30–50 ms look-ahead; display delayed by the same buffer for A/V sync inside the latency budget.
 
-#### Takes → keyframes
+#### Recording model
 
-1. Arm channels for record.
-2. `R` starts take; samples at timeline fps (interpolated from tracking @ 60–90 Hz).
-3. Stop → Take asset in `takes[]`.
-4. `T` or “Apply Take” writes cubic/hold keys; optional Butterworth denoise.
+1. Arm parameters / channels for record  
+2. `R` starts a **take**; trackers sample 60–90 Hz, resampled to timeline fps  
+3. Multiple **layered takes** (e.g. face pass, then arms)  
+4. `T` / Apply Take → editable keyframes (optional Butterworth denoise)  
+5. Takes stored as assets under `assets/takes/` with provenance
 
-#### Latency pipeline (&lt;100 ms)
+#### Latency pipeline (&lt;100 ms glass-to-glass)
 
 ```
 Camera/Mic → Capture (≤16ms) → Inference (≤33ms) → Param filter (≤8ms)
 → Channel write → GPU pose eval (≤8ms) → Present (≤16ms)  ≈ 81ms typical
 ```
 
-Drop frames in inference before dropping UI; never block draw thread.
-
-### Auto-rigging
-
-Input: character sprite sheet or layered PSD/ANIMA layers. Output: bone hierarchy + weights + suggested smart-bone mouth/eye controls as native `Bone`/`MeshDeform` — user-refinable in Weight Paint.
-
-### Walk / behavior system
-
-Locomotion clips as reusable `BehaviorGraph` nodes: idle, walk, run, turn — blend by speed param. Foot IK optional. Exportable as clip library assets.
+Drop inference frames before UI frames; never block the draw/present thread.
 
 ---
 
-## 2C — Composite Space
+### 2B.6 Auto-Rigging
+
+| Path | Output |
+|------|--------|
+| Template skeletons | Biped, quadruped, bird, fish |
+| AI auto-rig (Part 5) | From single character drawing / layered art → native `Bone[]` + weights + suggested smart controls |
+| Sharing | Rig package format for marketplace / library (content-addressed in asset store) |
+
+All outputs are user-refinable in Weight Paint / Bone Edit — never locked black boxes.
+
+---
+
+### 2B.7 Walk & Behavior System
+
+| Feature | Spec |
+|---------|------|
+| Walk generator | Parametric cycle: speed, bounce, arm swing, stride, **mood** sliders |
+| **Behavior blocks** | Reusable non-destructive layers: breathe, blink, idle sway, look-at |
+| **Layering order** (bottom → top evaluation) | 1. Base keys / takes → 2. Locomotion clip → 3. Behavior blocks → 4. Dynamics (optional) → 5. Manual override keys |
+| Export | Clips and behaviors as library assets |
+
+Behaviors are modifiers over channels; mute/solo per block; bake optional for delivery.
+
+---
+
+## 2C — COMPOSITE SPACE (VFX / motion graphics / editing)
+
+**Sources / DNA:** After Effects, Jitter, Terragen, Movavi, Stop Motion Studio, Powtoon, Animaker, Flipsnack.
 
 ### Panel layout
 
-Left: Node catalog · Center: Node graph canvas · Right: Viewer + Layer (AE-style) list · Bottom: Timeline for time-remapped comps.
+| Region | Proportion | Panels |
+|--------|------------|--------|
+| Left | **16% W** | Node catalog (categories below) |
+| Center | **~44% W** | Node graph canvas |
+| Right top | **~40% W × ~50% H** | Viewer |
+| Right bottom | **~40% W** | AE-style **Layer view** (projection of graph) |
+| Bottom | Shared timeline | Time remap, effect params, sequence assembly when in Seq mode |
 
-### Node graph categories
+### Default toolset
 
-| Category | Example nodes |
-|----------|----------------|
-| Source | Scene/Layer Ref, Solid, Image, Video, Contour |
-| Color | OCIO Grade, Curves, Hue/Sat, Levels |
-| Blur/Distort | Gaussian, Directional, Radial, Wave, Magnify |
-| Key/Matte | Chroma, Luma, Roto, Matte Ops |
-| Time | Echo, Time Remap, Posterize Time |
-| Vector/Mograph | Text, Shape, Repeater, Trim Paths, Wiggle |
-| 3D Lite | Extrude, Environment Dome |
-| AI | Style Transfer, Upscale (writes new layer ref, non-destructive) |
-| Output | Viewer, File Output, Web Interactive |
+Select, Pan, Node Create, Wire, Mute/Solo, Viewer Split, Layer View Toggle, Text Animator, Shape, Stop Motion Capture, Sequence Cut, Hotspot, Expression Editor.
 
-### AE-style layer view mapping
+### Keyboard map (Composite)
 
-Node graph is canonical. Layer view is a **filtered projection**: each top-level connected subgraph from a Scene Source becomes a layer row; blend mode ↔ over node; track matte ↔ matte link; effects stack ↔ linear chain of effect nodes. Reordering layers rewires z-order inputs. *Justification:* artists who think in AE layers get familiar UI without forking data model.
+| Key | Action |
+|-----|--------|
+| `Tab` | Cycle workspace (global) |
+| `Shift+A` | Add node (catalog search) |
+| `Ctrl+E` | Expression editor on selected property |
+| `Ctrl+L` | Toggle Layer view ↔ Graph focus |
+| `0` (numpad) | Fit viewer |
+| `,` / `.` | Frame step |
+| `Space` | Play / pause |
+| `Ctrl+J` | Jump to home workspace of sourced layer |
+| `Ctrl+/` | Mute selected node |
 
-### Motion blur & speed ramp
+---
 
-- Motion blur: shutter angle 0–720°, samples 8–64; velocity from transform channels.
-- Speed ramp: time remap channel on comp; graph editor editable; frame blend or optical-flow assist (AI optional → native warp mesh).
+### 2C.1 Node Graph Compositor
 
-### JS expression language API
+Every scene can render into a composite node graph. **Categories:**
 
-Sandboxed QuickJS (desktop) / constrained interpreter (web).
+| Category | Nodes (representative) |
+|----------|------------------------|
+| **Input** | Scene, Footage, Image, Camera, Procedural |
+| **Filter** | Blur, Glow, Color grade (curves/wheels), Chromatic aberration, Displacement |
+| **Keying** | Chroma (spill suppression), Luma, AI rotoscope (→ editable matte paths) |
+| **Generate** | Gradients, Noise, Fractals |
+| **Utility** | Merge, Transform, Time remap, Expression |
+| **Output** | Viewer, File Output, Web Interactive |
+
+Graph is canonical storage; evaluation is demand-driven with tile caching shared with the core renderer.
+
+---
+
+### 2C.2 Layer View ↔ Node Mapping
+
+AE-style layer timeline is a **synchronized view** of the same graph — not a second data model.
+
+| Layer UI concept | Node graph mapping |
+|------------------|--------------------|
+| Layer row | Top-level branch from a Scene/Footage input to merge stack |
+| Stack order | Z-order / merge input order |
+| Blend mode | Merge node mode |
+| Opacity | Merge/opacity param or channel |
+| Effects stack | Linear chain of filter nodes on that branch |
+| Track matte | Matte link input on merge |
+| Reorder layers | Rewire merge inputs |
+
+Edits in either view update one graph. *Justification:* AE muscle memory without forking formats.
+
+---
+
+### 2C.3 Effects, Motion & Expressions
+
+| Feature | Spec |
+|---------|------|
+| Motion blur | Per-layer; shutter angle 0–720°; samples 8–64 |
+| Speed ramp | Time-remap channel; graph-editable; frame blend or optical-flow assist → **native warp mesh** (not locked video) |
+| Expressions | **JavaScript subset** on QuickJS (desktop) / constrained interpreter (web) |
+
+**Expression API (documented):** `time`, `fps`, `value`, `thisLayer`, `thisComp`, `thisChannel`, `wiggle()`, `loopIn()` / `loopOut()`, `posterizeTime()`, property linking via `comp.layer(name).transform…`. No filesystem or network access.
 
 ```js
-// Bound names: time, fps, thisLayer, thisComp, thisChannel
-// Example: wiggle-like
 const amp = 20, freq = 2;
-thisChannel.value + Math.sin(time * freq * Math.PI * 2) * amp;
+value + Math.sin(time * freq * Math.PI * 2) * amp;
 ```
 
-API surface: `thisLayer.transform.*`, `comp.layer(name)`, `posterizeTime`, `loopIn/Out`, math helpers. No filesystem/network in expressions.
+---
 
-### Motion graphics toolkit
+### 2C.4 Motion Graphics Toolkit
 
-Text animators, path text, shape boolean ops, repeaters, gradient ramps, stroke trim — as first-class nodes writing to vector layers.
+| Feature | Spec |
+|---------|------|
+| Text animators | Per-character position/rotation/opacity/tracking with range selectors |
+| Presets | Fade, pop, glitch, typewriter, bounce — each fully editable after apply |
+| Shapes | Trim paths, repeaters, booleans |
+| Social layouts | Auto-reflow for **1:1**, **9:16**, **16:9** |
+| Brand kits | Fonts, colors, logos applied project-wide |
 
-### Procedural environments
+---
 
-Parallax camera rigs, tiling texture planes, simple particle (GPU), sky/dome generators — params keyable.
+### 2C.5 Procedural Environments
 
-### Stop motion module
+Terragen-inspired, animation-first:
 
-Capture bay: camera device → frame hold into layer; onion for physical; cleanup AI → stroke/matte refinement; timing on X-sheet.
+- Heightfield terrain + erosion simulation parameters (keyable)
+- Procedural sky (time-of-day; clouds as 2.5D volumes)
+- Weather particles: rain, snow, fog; **global wind force** that can drive Rig Space bone dynamics
+- Parallax auto-setup: one landscape → N depth-sliced layers following the camera
 
-### Sequence editing
+---
 
-Sequence Editor workspace sibling: shot assemble from scenes, transitions, audio mix buses, export marks. Non-linear but animation-first (not a Premiere replacement for long-form editorial).
+### 2C.6 Stop Motion Module
 
-### Interactive / web output
+| Step | Spec |
+|------|------|
+| Capture | Live USB / phone-as-webcam feed |
+| Onion | Against previous captured frame |
+| Trigger | Remote / keyboard / MIDI |
+| Cleanup | Dead-frame removal; exposure & WB lock; chroma-key rig removal |
+| Landing | Frames land on a normal **Draw Space** layer for hybrid practical/digital work |
 
-Export scene subset as HTML/WebGL (WASM player) or Lottie-adjacent JSON for supported subset (shapes, transforms, sprites). Interactive hotspots as `InteractionNode` (click → play marker).
+Home workspace for captured frames = Draw; Composite hosts the capture bay UI as a module.
+
+---
+
+### 2C.7 Sequence Editing
+
+Movavi-style **final assembly** above scene timelines:
+
+- Multi-scene sequence timeline: scenes as clips, transitions, audio tracks with waveforms
+- Ducking and simple mixing
+- Export marks / chapter markers
+- Animation-first — not a long-form Premiere replacement
+
+Sequence Editor shares playhead semantics with scenes when drilling in; see Part 3 for `Sequence` schema.
+
+---
+
+### 2C.8 Interactive / Web Output
+
+| Output | Spec |
+|--------|------|
+| HTML embed | Scroll-driven playback, hover states, clickable hotspots (`InteractionNode`) |
+| Flipbook mode | Page-turn presentation for storyboards / comics |
+| Player | WASM reduced player / WebGL; Lottie-adjacent subset export where supported |
+
+---
+
+### Workspace Switching — Data Behavior Summary
+
+| Data / UI state | On workspace switch | Editable where? |
+|-----------------|---------------------|-----------------|
+| Scene graph nodes / layers | **Preserved**; never converted or destroyed | Home workspace only; visible everywhere |
+| Timeline + playhead | **Shared / preserved** | All (timing); content edits per home rules |
+| Undo stack | **Project-wide**; uninterrupted | All |
+| Palettes / asset library | **Shared** | All |
+| Zoom / pan (view) | **Preserved per workspace** | View-only |
+| Selection | **Preserved**; foreign home → Jump affordance | Edit in home |
+| Panel layout | **Preserved per workspace** | — |
+| In-progress stroke / deform / Live buffer | **Flushed to channels** then switch | — |
+| Onion / Light Table / Live arming | Workspace-local UI state preserved | Draw / Rig respectively |
+| Explicit bake / flatten | Only when user invokes | Produces new layer/keys; sources kept |
+
+---
+
+*End of Part 2. Part 3 — Unified Timeline & Scene Graph follows.*
 
 ---
 
@@ -650,7 +932,7 @@ Skip anytime; progress stored in user prefs.
 
 ## 7.3 Command palette & shortcuts
 
-`Ctrl+K` / `Cmd+K` command palette. Remappable shortcuts. Bundled maps: **Blender**, **After Effects**, **Harmony**, **Photoshop** (+ ANIMA default).
+`Ctrl+K` / `Cmd+K` command palette. Remappable shortcuts. Bundled maps: **Blender**, **After Effects**, **Harmony**, **Photoshop** (+ ANIMA default). Global: `Tab` cycles workspaces; `Ctrl+J` jumps to the selected layer’s home workspace (Part 2).
 
 ## 7.4 Accessibility
 
@@ -715,4 +997,5 @@ Watch folder mode for Studio. Exit codes: 0 ok, 2 validation, 3 render fail, 4 l
 
 | Ver | Date | Notes |
 |-----|------|-------|
+| 0.2.0 | 2026-07-23 | Part 2 expanded to canonical three-workspace full spec |
 | 0.1.0 | 2026-07-23 | Initial exhaustive Parts 1–8 |

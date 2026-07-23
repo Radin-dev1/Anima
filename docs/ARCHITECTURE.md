@@ -43,7 +43,7 @@ flowchart TB
 
 ```mermaid
 flowchart LR
-  subgraph Graph["Shared Scene Graph"]
+  subgraph Graph["Shared Scene Graph + Timeline"]
     P[Project]
     SEQ[Sequences]
     SC[Scenes]
@@ -53,10 +53,10 @@ flowchart LR
     P --> SEQ --> SC --> L --> CH --> KF
   end
 
-  DS[Draw Space View]
-  RS[Rig Space View]
-  CS[Composite Space View]
-  SE[Sequence Editor View]
+  DS[Draw Space lens]
+  RS[Rig Space lens]
+  CS[Composite Space lens]
+  SE[Sequence Editor]
 
   DS --> L
   RS --> L
@@ -64,7 +64,12 @@ flowchart LR
   SE --> SEQ
 ```
 
-Switching workspaces flushes buffers and rebinds tools; it does **not** bake layers.
+**Data-visibility rules (canonical — see PRODUCT_SPEC Part 2):**
+
+- Workspaces are **lenses** on one scene graph + one timeline; switch never converts, exports, or destroys data.
+- Shared across lenses: timeline, playhead, scene graph, **project-wide undo**, palettes, asset library.
+- Layers are **visible** everywhere; **editable** only in their home workspace (`Tab` cycles; Jump-to-home for foreign selection).
+- Switch preserves zoom/pan/selection/playhead/per-workspace panel layout; flushes in-progress buffers; **no bake** unless explicit.
 
 ## 3. AI services
 

@@ -1,101 +1,114 @@
 # ANIMA Wireframes
 
-ASCII layouts with approximate proportions. Density shown: **Standard**.
+ASCII layouts with approximate proportions. Density shown: **Standard**.  
+Aligned with canonical [PRODUCT_SPEC.md Part 2](./PRODUCT_SPEC.md) panel layouts.
 
-Legend: `[Panel]` · `=` splitter · proportions as % of window.
+Legend: `[Panel]` · proportions as % of window. Shared timeline + playhead across all workspaces.
+
+**Global chrome:** `[Draw | Rig | Composite | Seq]` tabs · `Tab` cycles workspaces · foreign layers show *Jump to home*.
 
 ---
 
-## Draw Space
+## Draw Space (Part 2A)
+
+Left **18%** tools/brushes · Center **~52%** canvas · Right **30%** layers / drawing bank / X-sheet / onion · Bottom **~30%** shared timeline.
 
 ```
 +----------------------------------------------------------------------------------+
 | ANIMA  [Draw|Rig|Composite|Seq]   scene_main   24fps   [Quick|Std|Pro]  user*    |  4%
 +--------+-----------------------------------------------------------+-------------+
 | TOOLS  |                                                           | LAYERS      |
-| 18% W  |                    CANVAS                                 | / CELS      |
-|        |                    ~52% W × 66% H                         | 30% W       |
-| [B]rush|         GPU hybrid raster+vector                          |             |
-| [E]rase|         onion tint before/after                           | Ball        |
-| Fill   |         light table stack                                 | Character   |
-| Lasso  |                                                           | Beauty      |
+| 18% W  |                    CANVAS                                 | DRAWING BANK|
+|        |              GPU hybrid · 256px tiles                     | / CELS      |
+| Brush  |         onion #5B8CFF / #FF8A5B · keys-only               | 30% W       |
+| Erase  |         light table underlay · rotate/flip/mirror         | Ink         |
+| Fill   |                                                           | Rough       |
+| Lasso  |                                                           | Clean       |
 | Xform  |                                                           |-------------+
-|        |                                                           | X-SHEET     |
-| BRUSH  |                                                           | exposure    |
-| size[] |                                                           | cel cols    |
-| opac   |                                                           |-------------+
-| color  |                                                           | ONION/LT    |
-|        |                                                           | N=3/3       |
+| CelSwap|                                                           | X-SHEET     |
+| BRUSH  |                                                           | exposures   |
+| size[] |                                                           | timing chart|
+| lock   |                                                           | audio col   |
+| color  |                                                           |-------------+
+| palette|                                                           | ONION / LT  |
+|        |                                                           | N=3/3 falloff|
 +--------+-----------------------------------------------------------+-------------+
-| TIMELINE 100% W × 30% H                                                      |
-| |< playhead                                                          audio ~  |
-| layer rows · dope keys · markers                                             |
+| TIMELINE 100% W × ~30% H  (shared playhead · project-wide undo)                |
+| |< playhead · layer rows · dope keys · markers · audio scrub                   |
 +----------------------------------------------------------------------------------+
 ```
-
-**Focus:** Canvas is the hero; tools and cels support drawing without AE-style card clutter.
 
 ---
 
-## Rig Space
+## Rig Space (Part 2B)
+
+Left **16%** rig tools · Center viewport · Right **30%** properties / swap map / LIVE · Bottom shared timeline (bones, takes, behaviors).
 
 ```
 +----------------------------------------------------------------------------------+
-| ANIMA  [Draw|Rig|Composite|Seq]   LIVE idle   take_03                     user*  |
+| ANIMA  [Draw|Rig|Composite|Seq]   LIVE armed   take_03                    user*  |
 +--------+-----------------------------------------------------------+-------------+
 | RIG    |                                                           | PROPERTIES  |
 | TOOLS  |                   VIEWPORT                                | bone tree   |
-| 16% W  |                   mesh + bones overlay                    | constraints |
-| Bone+  |                   IK handles                              | weights     |
+| 16% W  |              mesh + bones + 3D overlay                    | constraints |
+| Bone+  |                   IK handles · FK/IK                      | weights     |
 | Pose   |                                                           |-------------+
-| Weight |                                                           | LIVE PERF   |
-| IK     |                                                           | face meters |
-| Bind   |                                                           | visemes 12  |
-| AutoRig|                                                           | hands/MIDI  |
+| Weight |                                                           | LAYER-SWAP  |
+| IK     |                                                           | mouths/hands|
+| Bind   |                                                           | angle auto  |
+| AutoRig|                                                           |-------------+
+| Behav  |                                                           | LIVE PERF   |
+|        |                                                           | face · 12   |
+|        |                                                           | visemes     |
+|        |                                                           | hands/MIDI  |
 |        |                                                           | [R]ec [T]ake|
+|        |                                                           | behaviors   |
 +--------+-----------------------------------------------------------+-------------+
-| TIMELINE — bone channels / takes / behavior clips                            |
+| TIMELINE — bone channels · takes · behavior layering (keys→loco→behaviors→dyn) |
 +----------------------------------------------------------------------------------+
 ```
 
 ---
 
-## Composite Space
+## Composite Space (Part 2C)
+
+Left **16%** node catalog · Center **~44%** graph · Right viewer + AE-style layer projection · Bottom timeline / sequence.
 
 ```
 +----------------------------------------------------------------------------------+
 | ANIMA  [Draw|Rig|Composite|Seq]   comp_beauty_glow                           |
 +-------------+------------------------------------------+-------------------------+
 | NODE        |                                          | VIEWER                  |
-| CATALOG     |           NODE GRAPH                     | 40% W × 50% H           |
-| 16% W       |           44% W                          |                         |
-| Source      |   [Scene]──[Glow]──[Merge]──[Out]        |                         |
-| Color       |                                          +-------------------------+
-| Blur        |                                          | LAYER VIEW (AE-style)   |
-| Key         |                                          | projection of graph     |
-| Time        |                                          | beauty                  |
-| Mograph     |                                          |   └ glow                |
-| AI          |                                          | output                  |
+| CATALOG     |           NODE GRAPH                     | ~40% W × ~50% H         |
+| 16% W       |           ~44% W                         |                         |
+| Input       |   [Scene]──[Glow]──[Merge]──[Out]        |                         |
+| Filter      |                                          +-------------------------+
+| Keying      |                                          | LAYER VIEW (AE-style)   |
+| Generate    |                                          | synced projection       |
+| Utility     |                                          | beauty                  |
+| Output      |                                          |   └ glow                |
+| Mograph     |                                          | output                  |
+| StopMotion  |                                          |                         |
 +-------------+------------------------------------------+-------------------------+
-| TIMELINE — time remap / effect params                                            |
+| TIMELINE — time remap · effect params · sequence clips when assembling           |
 +----------------------------------------------------------------------------------+
 ```
 
 ---
 
-## Sequence Editor
+## Sequence Editor (Composite 2C.7 assembly surface)
 
 ```
 +----------------------------------------------------------------------------------+
 | ANIMA  [Draw|Rig|Composite|Seq]   seq_main   review?                         |
 +---------------------------+------------------------------------------------------+
 | MEDIA / SCENES            |  PROGRAM MONITOR                                     |
-| 22% W                     |  preview of assembled shots                          |
+| 22% W                     |  assembled shots · transitions                       |
 | scene_main                |                                                      |
 | scene_alt                 |                                                      |
 | audio beds                |                                                      |
 +---------------------------+------------------------------------------------------+
-| SEQUENCE TIMELINE 100% W × 42% H                                                 |
+| SEQUENCE TIMELINE 100% W × ~42% H                                                |
 | V1  [==== scene_main ====][== scene_alt ==]                                      |
 | A1  [~~~~~~~~ dialogue ~~~~~~~~~~~~~~~~~~~~]                                     |
 | markers · transitions · export range                                             |

@@ -74,8 +74,12 @@ export interface OnionSettings {
   before: number;
   after: number;
   falloff: number;
+  /** Cool tint — Part 2A.3 default #5B8CFF */
   beforeTint: string;
+  /** Warm tint — Part 2A.3 default #FF8A5B */
   afterTint: string;
+  /** When true, onion only frames that have key drawings (Part 2A.3 keys-only) */
+  keysOnly: boolean;
 }
 
 export interface BrushSettings {

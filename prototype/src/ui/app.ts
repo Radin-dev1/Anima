@@ -31,8 +31,9 @@ export function mountApp(root: HTMLElement): void {
     before: 3,
     after: 2,
     falloff: 0.72,
-    beforeTint: '#5b8cff',
-    afterTint: '#ff8a5b',
+    beforeTint: '#5B8CFF',
+    afterTint: '#FF8A5B',
+    keysOnly: false,
   };
 
   const stabilizer = new StrokeStabilizer(10, 4);
@@ -58,6 +59,7 @@ export function mountApp(root: HTMLElement): void {
         <div class="hint">
           Draw with mouse or stylus · <kbd>B</kbd> brush <kbd>E</kbd> eraser
           <kbd>,</kbd>/<kbd>.</kbd> frames <kbd>Space</kbd> play <kbd>O</kbd> onion
+          <kbd>Shift+O</kbd> keys-only
         </div>
       </section>
       <aside class="panel right" id="layers-panel"></aside>
@@ -97,6 +99,7 @@ export function mountApp(root: HTMLElement): void {
       </label>
       <h2>Onion skin</h2>
       <label class="check"><input type="checkbox" id="onion" ${onion.enabled ? 'checked' : ''}/> Enabled</label>
+      <label class="check"><input type="checkbox" id="onion-keys" ${onion.keysOnly ? 'checked' : ''}/> Keys only</label>
       <label class="field">Before (${onion.before})
         <input type="range" id="onion-before" min="0" max="8" value="${onion.before}" />
       </label>
@@ -129,6 +132,11 @@ export function mountApp(root: HTMLElement): void {
     const onionCb = toolsPanel.querySelector('#onion') as HTMLInputElement;
     onionCb.addEventListener('change', () => {
       onion.enabled = onionCb.checked;
+      redraw();
+    });
+    const onionKeys = toolsPanel.querySelector('#onion-keys') as HTMLInputElement;
+    onionKeys.addEventListener('change', () => {
+      onion.keysOnly = onionKeys.checked;
       redraw();
     });
     const ob = toolsPanel.querySelector('#onion-before') as HTMLInputElement;
@@ -360,7 +368,11 @@ export function mountApp(root: HTMLElement): void {
         renderTools();
         break;
       case 'o':
-        onion.enabled = !onion.enabled;
+        if (e.shiftKey) {
+          onion.keysOnly = !onion.keysOnly;
+        } else {
+          onion.enabled = !onion.enabled;
+        }
         renderTools();
         redraw();
         break;

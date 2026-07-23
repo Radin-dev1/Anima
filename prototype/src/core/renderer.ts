@@ -1,4 +1,4 @@
-import { drawingAtFrame } from './project';
+import { drawingAtFrame, framesWithKeys } from './project';
 import { paintStroke } from './strokes';
 import type { OnionSettings, Scene } from './types';
 
@@ -18,6 +18,18 @@ function tintedStrokeColor(base: string, tint: string, strength = 0.55): string 
   return `rgb(${r},${g},${b})`;
 }
 
+function onionCandidateFrames(scene: Scene, onion: OnionSettings): Set<number> | null {
+  if (!onion.keysOnly) return null;
+  const keys = new Set<number>();
+  for (const layer of scene.layers) {
+    if (!layer.visible) continue;
+    const channel = scene.channels.find((c) => c.layerId === layer.id && c.path === 'frames');
+    if (!channel) continue;
+    for (const f of framesWithKeys(channel)) keys.add(f);
+  }
+  return keys;
+}
+
 export function renderScene(
   ctx: CanvasRenderingContext2D,
   scene: Scene,
@@ -30,19 +42,22 @@ export function renderScene(
   ctx.fillStyle = scene.backgroundColor;
   ctx.fillRect(0, 0, width, height);
 
-  // Checkerboard hint for empty feel
   drawSubtleGrid(ctx, width, height);
+
+  const keyFrames = onionCandidateFrames(scene, onion);
 
   if (onion.enabled) {
     for (let i = onion.before; i >= 1; i--) {
       const f = frame - i;
       if (f < 0) continue;
+      if (keyFrames && !keyFrames.has(f)) continue;
       const alpha = Math.pow(onion.falloff, i) * 0.55;
       paintFrame(ctx, scene, f, onion.beforeTint, alpha, true);
     }
     for (let i = 1; i <= onion.after; i++) {
       const f = frame + i;
       if (f >= scene.durationFrames) continue;
+      if (keyFrames && !keyFrames.has(f)) continue;
       const alpha = Math.pow(onion.falloff, i) * 0.55;
       paintFrame(ctx, scene, f, onion.afterTint, alpha, true);
     }
@@ -50,7 +65,6 @@ export function renderScene(
 
   paintFrame(ctx, scene, frame, null, 1, false);
 
-  // Active layer outline cue — none; keep clean
   void activeLayerId;
 }
 

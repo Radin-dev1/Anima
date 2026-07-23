@@ -42,7 +42,7 @@ See [PRODUCT_SPEC.md § Part 1](docs/PRODUCT_SPEC.md) for exact feature gates.
 ## Architectural spine
 
 - **Scene graph**: `Project → Sequences → Scenes → Layers → Channels → Keyframes`
-- **Three workspaces**: Draw Space · Rig Space · Composite Space (shared graph, switch without bake)
+- **Three workspaces**: Draw · Rig · Composite — **lenses** on one graph + timeline ([Part 2](docs/PRODUCT_SPEC.md#part-2--three-workspace-architecture)); switch never converts/destroys data; edit only in home workspace (`Tab` cycles)
 - **Core**: Rust + wgpu; desktop shell Tauri + React; web reduced WASM build
 - **Collab**: Yjs CRDT; Git-semantics version control with visual diff
 - **AI rule**: every AI feature outputs editable native ANIMA data
